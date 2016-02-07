@@ -1,0 +1,6 @@
+-lib random
+
+-cp src
+-main Player
+-js www/js/player.js
+-dce full
