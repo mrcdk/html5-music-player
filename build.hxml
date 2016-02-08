@@ -1,6 +1,12 @@
--lib random
+-lib thx.core
+-lib thx.load
+-lib thx.promise
+-lib thx.http
+-lib doom
+-lib dots
+-lib jQueryExtern
 
 -cp src
--main Player
--js www/js/player.js
--dce full
+-main Main
+-js static/js/player.js
+-dce std

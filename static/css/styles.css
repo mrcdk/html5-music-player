@@ -17,11 +17,6 @@
 html, body {
   font-family: 'Roboto', 'Helvetica', sans-serif;
 }
-.demo-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 24px;
-}
 .demo-layout .demo-header .mdl-textfield {
   padding: 0px;
   margin-top: 41px;
@@ -35,9 +30,7 @@ html, body {
 .mdl-layout__drawer .avatar {
   margin-bottom: 16px;
 }
-.demo-drawer {
-  border: none;
-}
+
 /* iOS Safari specific workaround */
 .demo-drawer .mdl-menu__container {
   z-index: -1;
@@ -68,25 +61,17 @@ html, body {
   padding: 16px;
   height: 151px;
 }
-.demo-avatar-dropdown {
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: flex;
-  position: relative;
-  -webkit-flex-direction: row;
-      -ms-flex-direction: row;
-          flex-direction: row;
-  -webkit-align-items: center;
-      -ms-flex-align: center;
-          align-items: center;
-  width: 100%;
-}
 
 .demo-navigation {
   -webkit-flex-grow: 1;
       -ms-flex-positive: 1;
           flex-grow: 1;
 }
+
+.demo-navigation a {
+	cursor: pointer;
+}
+
 .demo-layout .demo-navigation .mdl-navigation__link {
   display: -webkit-flex !important;
   display: -ms-flexbox !important;
@@ -113,10 +98,6 @@ html, body {
   max-width: 1080px;
 }
 
-.demo-list {
-	display: none;
-}
-
 .demo-list li:hover {
 	background-color: rgba(200, 200, 200, 0.56);
 	cursor: pointer;
@@ -126,7 +107,7 @@ html, body {
 	background-color: rgba(255, 200, 200, 0.56);
 }
 
-.demo-list li.playing {
+.demo-list li.active {
 	background-color: rgba(200, 200, 255, 0.56);
 }
 
@@ -153,10 +134,23 @@ html, body {
 	z-index:100;
 }
 
-#player {
-	width:98%;
+.controls .play-skip-buttons {
+	flex: 2 1 auto;
 }
 
-#loading {
-	width: 100%;
+.controls .play-button {
+	margin-right: 14px;
+}
+
+.controls .volume-buttons {
+	display: flex;
+	align-items: center;
+}
+
+.controls .volume-txt {
+	min-width:40px;
+}
+
+#player {
+	width:98%;
 }
