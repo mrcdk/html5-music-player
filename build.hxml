@@ -9,4 +9,5 @@
 -cp src
 -main Main
 -js static/js/player.js
--dce std
+-dce full
+-D analyzer

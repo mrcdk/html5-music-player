@@ -7,7 +7,7 @@ package;
 class Utils{
 
 	public static inline function formatTrackName(track:TrackInfo) {
-		return '${track.author} - ${track.title}';
+		return (track.author == null ? '' : '${track.author} - ') + '${track.title}';
 	}
 	
 	public static function formatTime(current:Float, ?end:Float) {

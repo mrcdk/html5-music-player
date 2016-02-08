@@ -24,4 +24,5 @@ html,body{font-family:'Roboto','Helvetica',sans-serif;}
 .controls .play-button{margin-right:14px;}
 .controls .volume-buttons{display:flex;align-items:center;}
 .controls .volume-txt{min-width:40px;}
+.mdl-progress{width:100%;}
 #player{width:98%;}

@@ -7,7 +7,6 @@ import doom.Node;
  * ...
  * @author MrCdK
  */
-@:children(none)
 class HeaderComponent extends Doom {
 
 	@:state public var title:String;
@@ -17,6 +16,6 @@ class HeaderComponent extends Doom {
 			div(["class" => "mdl-layout__header-row"], [
 				div(["class" => "mdl-layout-title"], title),
 			])
-		]);
+		].concat(children));
 	}
 }

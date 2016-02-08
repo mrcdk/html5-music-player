@@ -1,10 +1,14 @@
 package app;
 import doom.Node;
 import Doom.*;
+import dots.Query;
+import js.html.Element;
 class LoadingComponent extends Doom {
 	
+	@:state(false) var visible:Bool;
+	
 	override public function render() {
-		return p(["class" => "mdl-spinner mdl-js-spinner mdl-spinner--single-color is-active"]);
+		return div(["class" => 'mdl-progress mdl-js-progress mdl-progress--indeterminate ${visible?"is-active":""}', "id" => "loading-progress"]);
 	}
 	
 }

@@ -35,6 +35,7 @@ class App extends Doom {
 	override public function didMount() {
 		
 		@:privateAccess appApi.state = state;
+		@:privateAccess appApi.zenscroll = untyped __js__('new Zenscroll({0}, 1000, 9)', Query.find(".playlist"));
 
 		appApi.onUpdate = function() {
 			update(appApi.state);
@@ -46,16 +47,18 @@ class App extends Doom {
 	override public function render():Node {
 		
 		var content = switch(playlistState) {
-			case Loading:		LoadingComponent.with();
+			case Loading:		div();
 			case Loaded:		PlaylistComponent.with(appApi, state);
 			case Error(msg):	p(msg);
 		};
 		
 		return div(["class" => "demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header"], [
-			HeaderComponent.with ("VIP Aersia - HTML5 Player"),
+			HeaderComponent.with ("VIP Aersia - HTML5 Player"/*, [LoadingComponent.with({visible:playlistState == Loading})]*/),
 			MenuComponent.with (appApi, state),
-			div(["class" => "mdl-layout__content mdl-color--grey-100"], [
-				div(["class" => "mdl-grid"], div(["class" => "mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col"], content)),
+			div(["class" => "playlist mdl-layout__content mdl-color--grey-100"], [
+				div(["class" => "mdl-grid"], div(["class" => "mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col"], [
+					content,
+				])),
 			]),
 			PlayerComponent.with(appApi, state),
 		]);

@@ -3,7 +3,9 @@ package app;
 import dots.Query;
 import haxe.ds.Option;
 import haxe.xml.Fast;
+import js.Browser;
 import js.html.AudioElement;
+import js.html.Element;
 import thx.Arrays;
 import thx.Floats;
 import thx.load.Loader;
@@ -17,17 +19,21 @@ class MyApi {
 	public var player(default, null):AudioElement;
 	public var onUpdate:Void->Void;
 	
-	var currentLoader:Promise<String>;
+	var zenscroll:Dynamic;
 	
 	public function new() {
 		onUpdate = function() { };
 	}
 	
-	public function playTrack(track:TrackInfo, ?forcePlay:Bool = false) {
+	public function playTrack(track:TrackInfo, ?scroll:Bool = true) {
 		state.playState.track = track;
 		player.src = track.file;
 		player.play();
 		onUpdate();
+		
+		if (scroll) {
+			zenscroll.to(Query.find(".demo-list li.active"));
+		}
 	}
 	
 	public function playRandomTrack() {
@@ -62,11 +68,10 @@ class MyApi {
 		state.playState.times.total = 0;
 		state.tracks = null;
 		
-		if (currentLoader != null && !currentLoader.isResolved()) {			
-			currentLoader.success(function(_) {}).failure(function(_) {}).always(function() {});
-		}
+		player.pause();
+		onUpdate();
 		
-		currentLoader = Loader.getText(playlist.tracks_url)
+		Loader.getText(playlist.tracks_url)
 			.success(function(data) {
 				var tracks:Array<TrackInfo> = [];
 				try {
@@ -92,8 +97,6 @@ class MyApi {
 				state.playlistState = Error("Error loading XML: " + Std.string(error));
 			})
 			.always(onUpdate);
-			
-		onUpdate();
 	}
 	
 	public function bindAudioEvents(player:AudioElement) {

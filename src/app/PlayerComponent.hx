@@ -17,7 +17,7 @@ class PlayerComponent extends Doom {
 		return div(["class" => "controls mdl-card mdl-shadow--16dp"], [
 			audio(["preload" => "auto", "id" => "player"]),
 			div(["class" => "mdl-card__supporting-text  mdl-typography--text-center"], [
-				h4(appState.playState.track == null ? "-----" : Utils.formatTrackName(appState.playState.track)),
+				h4(appState.playState.track == null ? "Nothing playing" : Utils.formatTrackName(appState.playState.track)),
 			]),
 			div(["class" => "mdl-card__supporting-text  mdl-typography--text-center"], [
 				span(Utils.formatTime(appState.playState.times.current, appState.playState.times.total)),
