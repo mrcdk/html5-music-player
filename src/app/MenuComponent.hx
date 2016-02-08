@@ -1,6 +1,9 @@
 package app;
 import app.App.*;
 import doom.Node;
+import js.html.Element;
+import js.html.Event;
+import thx.Strings;
 
 import Doom.*;
 
@@ -24,7 +27,8 @@ class MenuComponent extends Doom {
 					},
 					{
 						playlist: (playlist:Playlist), 
-						active: appState.currentPlaylist == playlist
+						active: appState.currentPlaylist == playlist,
+						source: playlist.source,
 					});
 				}
 			]),
@@ -37,14 +41,26 @@ class MenuEntry extends Doom {
 	
 	@:state(opt) public var playlist:Playlist;
 	@:state(false) public var active:Bool;
+	@:state(opt) public var source:String;
 	
 	@:api public var click:Void->Void;
 	
 	override public function render() {
-		return a([
+		return div([
 			"class" => "mdl-navigation__link" + (active ? " active" : ""),
-			"click" => click,
-			"href" => "",
-		], '${playlist.host} - ${playlist.name}');
+			"click" => function(e:Event) {
+				var cls = cast(e.target, Element).className;
+				if(cls.length > 0 && !Strings.contains(cls, "navigation__link")) return;
+				click();
+			}
+		], [
+			span('${playlist.host} - ${playlist.name}'),
+			div(["class" => "mdl-layout-spacer"]),
+			a([
+				"class" => "mdl-button mdl-js-button mdl-button--icon",
+				"href" => source,
+				"target" => "_blank",
+			], i(["class" => "material-icons"], "open_in_new")),
+		]);
 	}
 }
