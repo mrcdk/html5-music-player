@@ -1,8 +1,10 @@
 package app;
 import app.App.*;
 import Doom.*;
+import js.html.Element;
 import js.html.Event;
 import js.Lib;
+import thx.Strings;
 
 class PlaylistComponent extends Doom {
 	
@@ -38,7 +40,8 @@ class PlaylistEntry extends Doom {
 		return li([
 			"class" => "mdl-list__item" + (active ? " active" : ""),
 			"click" => function(e:Event) {
-				if (e.target != Lib.nativeThis) return;
+				var cls = cast(e.target, Element).className;
+				if(cls.length > 0 && !Strings.contains(cls, "list__item")) return;
 				click();
 			},
 		],

@@ -1287,7 +1287,8 @@ app_PlaylistEntry.prototype = $extend(Doom.prototype,{
 		var value = doom__$AttributeValue_AttributeValue_$Impl_$.fromString("mdl-list__item" + (this.state.active?" active":""));
 		if(__map_reserved["class"] != null) _g.setReserved("class",value); else _g.h["class"] = value;
 		var value1 = doom__$AttributeValue_AttributeValue_$Impl_$.fromEventHandler(function(e) {
-			if(e.target != this) return;
+			var cls = (js_Boot.__cast(e.target , HTMLElement)).className;
+			if(cls.length > 0 && !(cls.indexOf("list__item") >= 0)) return;
 			_g1.api.click();
 		});
 		if(__map_reserved.click != null) _g.setReserved("click",value1); else _g.h["click"] = value1;
@@ -3027,6 +3028,9 @@ js_Boot.__instanceof = function(o,cl) {
 		if(cl == Enum && o.__ename__ != null) return true;
 		return o.__enum__ == cl;
 	}
+};
+js_Boot.__cast = function(o,t) {
+	if(js_Boot.__instanceof(o,t)) return o; else throw new js__$Boot_HaxeError("Cannot cast " + Std.string(o) + " to " + Std.string(t));
 };
 js_Boot.__nativeClassName = function(o) {
 	var name = js_Boot.__toStr.call(o).slice(8,-1);
