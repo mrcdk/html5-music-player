@@ -53,7 +53,7 @@ class App extends Doom {
 		};
 		
 		return div(["class" => "demo-layout mdl-layout mdl-js-layout mdl-layout--fixed-drawer mdl-layout--fixed-header"], [
-			HeaderComponent.with ("VIP Aersia - HTML5 Player"/*, [LoadingComponent.with({visible:playlistState == Loading})]*/),
+			HeaderComponent.with ("HTML5 Music Player"/*, [LoadingComponent.with({visible:playlistState == Loading})]*/),
 			MenuComponent.with (appApi, state),
 			div(["class" => "playlist mdl-layout__content mdl-color--grey-100"], [
 				div(["class" => "mdl-grid"], div(["class" => "mdl-color--white mdl-shadow--2dp mdl-cell mdl-cell--12-col"], [

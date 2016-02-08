@@ -34,7 +34,6 @@
     <library name="thx.http" />
     <library name="doom" />
     <library name="dots" />
-    <library name="jQueryExtern" />
   </haxelib>
   <!-- Class files to compile (other referenced classes will automatically be included) -->
   <compileTargets>

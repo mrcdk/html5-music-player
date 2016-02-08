@@ -69,8 +69,40 @@ class MyApi {
 		state.tracks = null;
 		
 		player.pause();
+		
+		switch(playlist.host.toLowerCase()) {
+			case "aersia": loadAersia(playlist, success);
+			case "jetsetradio": loadJetsetradio(playlist, success);
+		}
+		
 		onUpdate();
 		
+	}
+	
+	public function bindAudioEvents(player:AudioElement) {
+		this.player = player;
+		player.volume = state.playState.volume;
+		
+		player.onplay = function() {
+			state.playState.paused = false;
+			onUpdate();
+		}
+		player.onpause = function() {
+			state.playState.paused = true;
+			onUpdate();
+		}
+		
+		player.onended = function() {
+			playRandomTrack();
+		}
+		player.ontimeupdate = function() {
+			state.playState.times.current = player.currentTime;
+			state.playState.times.total = player.duration;
+			onUpdate();
+		}
+	}
+	
+	function loadAersia(playlist:Playlist, ?success:Void->Void) {
 		Loader.getText(playlist.tracks_url)
 			.success(function(data) {
 				var tracks:Array<TrackInfo> = [];
@@ -99,26 +131,47 @@ class MyApi {
 			.always(onUpdate);
 	}
 	
-	public function bindAudioEvents(player:AudioElement) {
-		this.player = player;
-		player.volume = state.playState.volume;
-		
-		player.onplay = function() {
-			state.playState.paused = false;
-			onUpdate();
-		}
-		player.onpause = function() {
-			state.playState.paused = true;
-			onUpdate();
+	function loadJetsetradio(playlist:Playlist, ?success:Void->Void) {
+		var filesListArray:Array<String> = untyped Browser.window.filesListArray;
+		if(filesListArray == null) {
+			untyped Browser.window.filesListArray = filesListArray = [];
 		}
 		
-		player.onended = function() {
-			playRandomTrack();
-		}
-		player.ontimeupdate = function() {
-			state.playState.times.current = player.currentTime;
-			state.playState.times.total = player.duration;
+		function load() {
+			var tracks:Array<TrackInfo> = [];
+			for (file in filesListArray) {
+				tracks.push({
+					title: file,
+					author: null,
+					file: 'http://jetsetradio.live/audioplayer/audio/$file.mp3',
+				});
+			}
+			
+			state.playlistState = Loaded;
+			state.tracks = tracks;
 			onUpdate();
+			if (success != null) success();
 		}
+		
+		var id = '${playlist.host}-${playlist.name}';
+		
+		if (Query.find('#${id}') == null) {
+			var script = Browser.document.createScriptElement();
+			script.id = id;
+			script.src = "http://jetsetradio.live/audioplayer/audio/~list.js";
+			script.type = 'text/javascript';
+			script.async = true;
+			
+			script.onload = load;
+			
+			var e:Element = Query.find("head");
+			e.appendChild(script);
+		} else {
+			load();
+		}
+		
+
+		
+		onUpdate();
 	}
 }

@@ -15,7 +15,8 @@ class Main{
 		{host: 'Aersia', name:'Source', tracks_url:'http://vip.aersia.net/roster-source.xml', source: 'http://vip.aersia.net'},
 		{host: 'Aersia', name:'Exiled', tracks_url:'http://vip.aersia.net/roster-exiled.xml', source: 'http://vip.aersia.net'},
 		{host: 'Aersia', name:'WAP', tracks_url:'http://wap.aersia.net/roster.xml', source: 'http://vip.aersia.net'},
-		{host: 'Aersia', name:'CPP', tracks_url:'http://cpp.aersia.net/roster.xml', source: 'http://vip.aersia.net'}
+		{host: 'Aersia', name:'CPP', tracks_url:'http://cpp.aersia.net/roster.xml', source: 'http://vip.aersia.net'},
+		{host: 'JetSetRadio', name:'Live', tracks_url:'http://jetsetradio.live/audioplayer/audio/~list.js', source: 'http://jetsetradio.live'},
 	];
 	
 	public static function main() {

@@ -579,7 +579,7 @@ app_App.prototype = $extend(Doom.prototype,{
 		tmp5 = doom__$Node_Node_$Impl_$.el("div",attributes2,null,child1);
 		var children1 = [tmp5];
 		tmp3 = doom__$Node_Node_$Impl_$.el("div",attributes1,children1,null);
-		var children = [app_HeaderComponent["with"]("VIP Aersia - HTML5 Player"),app_MenuComponent["with"](this.api.appApi,this.state),tmp3,app_PlayerComponent["with"](this.api.appApi,this.state)];
+		var children = [app_HeaderComponent["with"]("HTML5 Music Player"),app_MenuComponent["with"](this.api.appApi,this.state),tmp3,app_PlayerComponent["with"](this.api.appApi,this.state)];
 		tmp1 = doom__$Node_Node_$Impl_$.el("div",attributes,children,null);
 		return tmp1;
 	}
@@ -792,7 +792,6 @@ app_MyApi.prototype = {
 		this.onUpdate();
 	}
 	,loadPlaylist: function(playlist,success) {
-		var _g = this;
 		this.state.playlistState = app_PlaylistState.Loading;
 		this.state.currentPlaylist = playlist;
 		this.state.playState.track = null;
@@ -800,7 +799,40 @@ app_MyApi.prototype = {
 		this.state.playState.times.total = 0;
 		this.state.tracks = null;
 		this.player.pause();
+		var _g = playlist.host.toLowerCase();
+		switch(_g) {
+		case "aersia":
+			this.loadAersia(playlist,success);
+			break;
+		case "jetsetradio":
+			this.loadJetsetradio(playlist,success);
+			break;
+		}
 		this.onUpdate();
+	}
+	,bindAudioEvents: function(player) {
+		var _g = this;
+		this.player = player;
+		player.volume = this.state.playState.volume;
+		player.onplay = function() {
+			_g.state.playState.paused = false;
+			_g.onUpdate();
+		};
+		player.onpause = function() {
+			_g.state.playState.paused = true;
+			_g.onUpdate();
+		};
+		player.onended = function() {
+			_g.playRandomTrack();
+		};
+		player.ontimeupdate = function() {
+			_g.state.playState.times.current = player.currentTime;
+			_g.state.playState.times.total = player.duration;
+			_g.onUpdate();
+		};
+	}
+	,loadAersia: function(playlist,success) {
+		var _g = this;
 		thx_promise__$Promise_Promise_$Impl_$.always(thx_promise__$Promise_Promise_$Impl_$.failure(thx_promise__$Promise_Promise_$Impl_$.success(thx_load_Loader.getText(playlist.tracks_url),function(data) {
 			var tracks = [];
 			try {
@@ -829,26 +861,40 @@ app_MyApi.prototype = {
 			_g.state.playlistState = app_PlaylistState.Error("Error loading XML: " + Std.string(error));
 		}),this.onUpdate);
 	}
-	,bindAudioEvents: function(player) {
+	,loadJetsetradio: function(playlist,success) {
 		var _g = this;
-		this.player = player;
-		player.volume = this.state.playState.volume;
-		player.onplay = function() {
-			_g.state.playState.paused = false;
+		var filesListArray = window.filesListArray;
+		if(filesListArray == null) window.filesListArray = filesListArray = [];
+		var load = function() {
+			var tracks = [];
+			var _g1 = 0;
+			while(_g1 < filesListArray.length) {
+				var file = filesListArray[_g1];
+				++_g1;
+				tracks.push({ title : file, author : null, file : "http://jetsetradio.live/audioplayer/audio/" + file + ".mp3"});
+			}
+			_g.state.playlistState = app_PlaylistState.Loaded;
+			_g.state.tracks = tracks;
 			_g.onUpdate();
+			if(success != null) success();
 		};
-		player.onpause = function() {
-			_g.state.playState.paused = true;
-			_g.onUpdate();
-		};
-		player.onended = function() {
-			_g.playRandomTrack();
-		};
-		player.ontimeupdate = function() {
-			_g.state.playState.times.current = player.currentTime;
-			_g.state.playState.times.total = player.duration;
-			_g.onUpdate();
-		};
+		var id = "" + playlist.host + "-" + playlist.name;
+		if(dots_Query.find("#" + id) == null) {
+			var script = (function($this) {
+				var $r;
+				var _this = window.document;
+				$r = _this.createElement("script");
+				return $r;
+			}(this));
+			script.id = id;
+			script.src = "http://jetsetradio.live/audioplayer/audio/~list.js";
+			script.type = "text/javascript";
+			script.async = true;
+			script.onload = load;
+			var e = dots_Query.find("head");
+			e.appendChild(script);
+		} else load();
+		this.onUpdate();
 	}
 	,__class__: app_MyApi
 };
@@ -3900,7 +3946,7 @@ Doom.namespaces = (function($this) {
 	$r = _g;
 	return $r;
 }(this));
-Main.playlists = [{ host : "Aersia", name : "VIP", tracks_url : "http://vip.aersia.net/roster.xml", source : "http://vip.aersia.net"},{ host : "Aersia", name : "Mellow", tracks_url : "http://vip.aersia.net/roster-mellow.xml", source : "http://vip.aersia.net"},{ host : "Aersia", name : "Source", tracks_url : "http://vip.aersia.net/roster-source.xml", source : "http://vip.aersia.net"},{ host : "Aersia", name : "Exiled", tracks_url : "http://vip.aersia.net/roster-exiled.xml", source : "http://vip.aersia.net"},{ host : "Aersia", name : "WAP", tracks_url : "http://wap.aersia.net/roster.xml", source : "http://vip.aersia.net"},{ host : "Aersia", name : "CPP", tracks_url : "http://cpp.aersia.net/roster.xml", source : "http://vip.aersia.net"}];
+Main.playlists = [{ host : "Aersia", name : "VIP", tracks_url : "http://vip.aersia.net/roster.xml", source : "http://vip.aersia.net"},{ host : "Aersia", name : "Mellow", tracks_url : "http://vip.aersia.net/roster-mellow.xml", source : "http://vip.aersia.net"},{ host : "Aersia", name : "Source", tracks_url : "http://vip.aersia.net/roster-source.xml", source : "http://vip.aersia.net"},{ host : "Aersia", name : "Exiled", tracks_url : "http://vip.aersia.net/roster-exiled.xml", source : "http://vip.aersia.net"},{ host : "Aersia", name : "WAP", tracks_url : "http://wap.aersia.net/roster.xml", source : "http://vip.aersia.net"},{ host : "Aersia", name : "CPP", tracks_url : "http://cpp.aersia.net/roster.xml", source : "http://vip.aersia.net"},{ host : "JetSetRadio", name : "Live", tracks_url : "http://jetsetradio.live/audioplayer/audio/~list.js", source : "http://jetsetradio.live"}];
 Xml.Element = 0;
 Xml.PCData = 1;
 Xml.CData = 2;

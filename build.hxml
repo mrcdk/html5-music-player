@@ -4,7 +4,6 @@
 -lib thx.http
 -lib doom
 -lib dots
--lib jQueryExtern
 
 -cp src
 -main Main
