@@ -28,6 +28,7 @@ class MenuComponent extends Doom {
 					});
 				}
 			]),
+			div(["class" => "mdl-typography--text-center"], "Made by Justo Delgado Baudí"),
 		]);
 	}
 }

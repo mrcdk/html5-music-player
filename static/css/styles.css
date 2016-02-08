@@ -31,6 +31,10 @@ html, body {
   margin-bottom: 16px;
 }
 
+.demo-drawer {
+  border: none;
+}
+
 /* iOS Safari specific workaround */
 .demo-drawer .mdl-menu__container {
   z-index: -1;
@@ -127,11 +131,24 @@ html, body {
   margin-left: 3px;
 }
 
-.controls {
-	position:absolute;
-	bottom:2%;
-	right:2%;
-	z-index:100;
+
+
+@media screen and (min-width:1025px) {
+	.controls {
+		position:absolute;
+		bottom:2%;
+		right:2%;
+		z-index:1;
+	}
+}
+
+@media screen and (max-width:1024px) {
+	.controls {
+		position:relative;
+		width:100%;
+		min-height: 220px;
+		z-index:1;
+	}
 }
 
 .controls .play-skip-buttons {

@@ -3,6 +3,7 @@ html,body{font-family:'Roboto','Helvetica',sans-serif;}
 .demo-layout .demo-header .mdl-textfield .mdl-textfield__expandable-holder{bottom:19px;}
 .demo-layout .mdl-layout__header .mdl-layout__drawer-button{color:rgba(0,0,0,0.54);}
 .mdl-layout__drawer .avatar{margin-bottom:16px;}
+.demo-drawer{border:none;}
 .demo-drawer .mdl-menu__container{z-index:-1;}
 .demo-drawer .demo-navigation{z-index:-2;}
 .demo-drawer .mdl-menu .mdl-menu__item{display:-webkit-flex;display:-ms-flexbox;display:flex;-webkit-align-items:center;-ms-flex-align:center;align-items:center;}
@@ -19,7 +20,8 @@ html,body{font-family:'Roboto','Helvetica',sans-serif;}
 .mdl-card__title{display:flex;box-sizing:border-box;align-items:center;}
 .mdl-card__actions{display:flex;box-sizing:border-box;align-items:center;}
 .mdl-card__actions>.mdl-button--icon{margin-right:3px;margin-left:3px;}
-.controls{position:absolute;bottom:2%;right:2%;z-index:100;}
+@media screen and (min-width:1025px){.controls{position:absolute;bottom:2%;right:2%;z-index:1;}}
+@media screen and (max-width:1024px){.controls{position:relative;width:100%;min-height:220px;z-index:1;}}
 .controls .play-skip-buttons{flex:2 1 auto;}
 .controls .play-button{margin-right:14px;}
 .controls .volume-buttons{display:flex;align-items:center;}
