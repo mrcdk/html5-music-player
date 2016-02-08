@@ -13,6 +13,12 @@ class PlayerComponent extends Doom {
 	@:state var appState:AppState;
 	@:api var appApi:MyApi;
 	
+	override public function didMount() {
+		appApi.onPlayerUpdate = function() {
+			update({appState:appApi.state});
+		}
+	}
+	
 	override public function render():Node {
 		return div(["class" => "controls mdl-card mdl-shadow--16dp"], [
 			audio(["preload" => "auto", "id" => "player"]),

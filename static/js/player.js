@@ -844,6 +844,8 @@ app_MenuEntry.prototype = $extend(Doom.prototype,{
 var app_MyApi = function() {
 	this.onUpdate = function() {
 	};
+	this.onPlayerUpdate = function() {
+	};
 };
 app_MyApi.__name__ = ["app","MyApi"];
 app_MyApi.prototype = {
@@ -881,7 +883,7 @@ app_MyApi.prototype = {
 		if(v1 < 0.) tmp = 0.; else if(v1 > 1.) tmp = 1.; else tmp = v1;
 		this.player.volume = tmp;
 		this.state.playState.volume = this.player.volume;
-		this.onUpdate();
+		this.onPlayerUpdate();
 	}
 	,loadPlaylist: function(playlist,success) {
 		this.state.playlistState = app_PlaylistState.Loading;
@@ -908,11 +910,11 @@ app_MyApi.prototype = {
 		player.volume = this.state.playState.volume;
 		player.onplay = function() {
 			_g.state.playState.paused = false;
-			_g.onUpdate();
+			_g.onPlayerUpdate();
 		};
 		player.onpause = function() {
 			_g.state.playState.paused = true;
-			_g.onUpdate();
+			_g.onPlayerUpdate();
 		};
 		player.onended = function() {
 			_g.playRandomTrack();
@@ -920,7 +922,7 @@ app_MyApi.prototype = {
 		player.ontimeupdate = function() {
 			_g.state.playState.times.current = player.currentTime;
 			_g.state.playState.times.total = player.duration;
-			_g.onUpdate();
+			_g.onPlayerUpdate();
 		};
 	}
 	,loadAersia: function(playlist,success) {
@@ -1007,7 +1009,13 @@ app_PlayerComponent["with"] = function(appApi,appState,children) {
 };
 app_PlayerComponent.__super__ = Doom;
 app_PlayerComponent.prototype = $extend(Doom.prototype,{
-	render: function() {
+	didMount: function() {
+		var _g = this;
+		this.api.appApi.onPlayerUpdate = function() {
+			_g.update({ appState : _g.api.appApi.state});
+		};
+	}
+	,render: function() {
 		var _g7 = this;
 		var tmp;
 		var tmp1;
@@ -1191,6 +1199,15 @@ app_PlayerComponent.prototype = $extend(Doom.prototype,{
 		tmp = doom__$Node_Node_$Impl_$.el("div",attributes,children,null);
 		return tmp;
 	}
+	,update: function(newState) {
+		var oldState = this.state;
+		this.state = newState;
+		if(!this.shouldRender(oldState,newState)) return;
+		this.updateNode(this.node);
+	}
+	,shouldRender: function(oldState,newState) {
+		return true;
+	}
 	,__class__: app_PlayerComponent
 });
 var app_PlaylistComponent = function(api,state,children) {
@@ -1210,7 +1227,10 @@ app_PlaylistComponent["with"] = function(appApi,appState,children) {
 };
 app_PlaylistComponent.__super__ = Doom;
 app_PlaylistComponent.prototype = $extend(Doom.prototype,{
-	render: function() {
+	didRefresh: function() {
+		componentHandler.upgradeAllRegistered();
+	}
+	,render: function() {
 		var _g4 = this;
 		var tmp;
 		var tmp1;
@@ -1260,32 +1280,69 @@ app_PlaylistEntry["with"] = function(click,state,children) {
 app_PlaylistEntry.__super__ = Doom;
 app_PlaylistEntry.prototype = $extend(Doom.prototype,{
 	render: function() {
+		var _g1 = this;
 		var tmp;
 		var tmp1;
 		var _g = new haxe_ds_StringMap();
 		var value = doom__$AttributeValue_AttributeValue_$Impl_$.fromString("mdl-list__item" + (this.state.active?" active":""));
 		if(__map_reserved["class"] != null) _g.setReserved("class",value); else _g.h["class"] = value;
-		var value1 = doom__$AttributeValue_AttributeValue_$Impl_$.fromHandler(this.api.click);
+		var value1 = doom__$AttributeValue_AttributeValue_$Impl_$.fromEventHandler(function(e) {
+			if(e.target != this) return;
+			_g1.api.click();
+		});
 		if(__map_reserved.click != null) _g.setReserved("click",value1); else _g.h["click"] = value1;
 		tmp1 = _g;
 		var attributes = tmp1;
 		var tmp2;
-		var tmp3;
-		var _g2 = new haxe_ds_StringMap();
-		var value2 = doom__$AttributeValue_AttributeValue_$Impl_$.fromString("mdl-list__item-primary-content");
-		if(__map_reserved["class"] != null) _g2.setReserved("class",value2); else _g2.h["class"] = value2;
-		tmp3 = _g2;
-		var attributes1 = tmp3;
 		var tmp4;
+		var _g11 = new haxe_ds_StringMap();
+		var value2 = doom__$AttributeValue_AttributeValue_$Impl_$.fromString("mdl-list__item-primary-content");
+		if(__map_reserved["class"] != null) _g11.setReserved("class",value2); else _g11.h["class"] = value2;
+		tmp4 = _g11;
+		var attributes1 = tmp4;
 		var tmp5;
+		var tmp6;
 		var track = this.state.track;
-		tmp5 = (track.author == null?"":"" + track.author + " - ") + ("" + track.title);
-		var child2 = doom_NodeImpl.Text(tmp5);
-		tmp4 = doom__$Node_Node_$Impl_$.el("span",null,null,child2);
-		var child1 = tmp4;
-		tmp2 = doom__$Node_Node_$Impl_$.el("span",attributes1,null,child1);
-		var child = tmp2;
-		tmp = doom__$Node_Node_$Impl_$.el("li",attributes,null,child);
+		tmp6 = (track.author == null?"":"" + track.author + " - ") + ("" + track.title);
+		var child1 = doom_NodeImpl.Text(tmp6);
+		tmp5 = doom__$Node_Node_$Impl_$.el("span",null,null,child1);
+		var child = tmp5;
+		tmp2 = doom__$Node_Node_$Impl_$.el("span",attributes1,null,child);
+		var tmp3;
+		var tmp7;
+		var _g2 = new haxe_ds_StringMap();
+		var value3 = doom__$AttributeValue_AttributeValue_$Impl_$.fromString("mdl-list__item-secondary-content");
+		if(__map_reserved["class"] != null) _g2.setReserved("class",value3); else _g2.h["class"] = value3;
+		tmp7 = _g2;
+		var attributes2 = tmp7;
+		var tmp8;
+		var tmp9;
+		var _g3 = new haxe_ds_StringMap();
+		var value4 = doom__$AttributeValue_AttributeValue_$Impl_$.fromString("mdl-button mdl-js-button mdl-button--icon");
+		if(__map_reserved["class"] != null) _g3.setReserved("class",value4); else _g3.h["class"] = value4;
+		var value5 = doom__$AttributeValue_AttributeValue_$Impl_$.fromString(this.state.track.file);
+		if(__map_reserved.href != null) _g3.setReserved("href",value5); else _g3.h["href"] = value5;
+		var value6 = doom__$AttributeValue_AttributeValue_$Impl_$.fromString("_blank");
+		if(__map_reserved.target != null) _g3.setReserved("target",value6); else _g3.h["target"] = value6;
+		var value7 = doom__$AttributeValue_AttributeValue_$Impl_$.fromBool(true);
+		if(__map_reserved.download != null) _g3.setReserved("download",value7); else _g3.h["download"] = value7;
+		tmp9 = _g3;
+		var attributes3 = tmp9;
+		var tmp10;
+		var tmp11;
+		var _g5 = new haxe_ds_StringMap();
+		var value8 = doom__$AttributeValue_AttributeValue_$Impl_$.fromString("material-icons");
+		if(__map_reserved["class"] != null) _g5.setReserved("class",value8); else _g5.h["class"] = value8;
+		tmp11 = _g5;
+		var attributes4 = tmp11;
+		var child3 = doom_NodeImpl.Text("file_download");
+		tmp10 = doom__$Node_Node_$Impl_$.el("i",attributes4,null,child3);
+		var child2 = tmp10;
+		tmp8 = doom__$Node_Node_$Impl_$.el("a",attributes3,null,child2);
+		var children1 = [tmp8];
+		tmp3 = doom__$Node_Node_$Impl_$.el("span",attributes2,children1,null);
+		var children = [tmp2,tmp3];
+		tmp = doom__$Node_Node_$Impl_$.el("li",attributes,children,null);
 		return tmp;
 	}
 	,__class__: app_PlaylistEntry
@@ -1295,11 +1352,17 @@ doom__$AttributeValue_AttributeValue_$Impl_$.__name__ = ["doom","_AttributeValue
 doom__$AttributeValue_AttributeValue_$Impl_$.fromString = function(s) {
 	return doom_AttributeValueImpl.StringAttribute(s);
 };
+doom__$AttributeValue_AttributeValue_$Impl_$.fromBool = function(b) {
+	return doom_AttributeValueImpl.BoolAttribute(b);
+};
 doom__$AttributeValue_AttributeValue_$Impl_$.fromHandler = function(f) {
 	return null == f?doom_AttributeValueImpl.BoolAttribute(false):doom_AttributeValueImpl.EventAttribute(function(e) {
 		e.preventDefault();
 		f();
 	});
+};
+doom__$AttributeValue_AttributeValue_$Impl_$.fromEventHandler = function(f) {
+	return null == f?doom_AttributeValueImpl.BoolAttribute(false):doom_AttributeValueImpl.EventAttribute(f);
 };
 doom__$AttributeValue_AttributeValue_$Impl_$.equalsTo = function(this1,that) {
 	var tmp;

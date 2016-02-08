@@ -18,11 +18,13 @@ class MyApi {
 	public var state(default, null):Dynamic;
 	public var player(default, null):AudioElement;
 	public var onUpdate:Void->Void;
+	public var onPlayerUpdate:Void->Void;
 	
 	var zenscroll:Dynamic;
 	
 	public function new() {
 		onUpdate = function() { };
+		onPlayerUpdate = function() { };
 	}
 	
 	public function playTrack(track:TrackInfo, ?scroll:Bool = true) {
@@ -57,7 +59,7 @@ class MyApi {
 	public function volumeChange(v:Float) {
 		player.volume = Floats.clamp(player.volume+v, 0., 1.);
 		state.playState.volume = player.volume;
-		onUpdate();
+		onPlayerUpdate();
 	}
 	
 	public function loadPlaylist(playlist:Playlist, ?success:Void->Void) {
@@ -85,11 +87,11 @@ class MyApi {
 		
 		player.onplay = function() {
 			state.playState.paused = false;
-			onUpdate();
+			onPlayerUpdate();
 		}
 		player.onpause = function() {
 			state.playState.paused = true;
-			onUpdate();
+			onPlayerUpdate();
 		}
 		
 		player.onended = function() {
@@ -98,7 +100,7 @@ class MyApi {
 		player.ontimeupdate = function() {
 			state.playState.times.current = player.currentTime;
 			state.playState.times.total = player.duration;
-			onUpdate();
+			onPlayerUpdate();
 		}
 	}
 	
@@ -169,8 +171,6 @@ class MyApi {
 		} else {
 			load();
 		}
-		
-
 		
 		onUpdate();
 	}
