@@ -12,6 +12,7 @@ doom_IComponent.prototype = {
 	__class__: doom_IComponent
 };
 var doom_ComponentBase = function(children) {
+	this.isUnmounted = false;
 	this.children = null == children?[]:children;
 	this.node = this.render();
 };
@@ -23,7 +24,7 @@ doom_ComponentBase.prototype = {
 		this.element = doom_HtmlNode.toHtml(this.node,post);
 	}
 	,render: function() {
-		throw new thx_error_AbstractMethod({ fileName : "ComponentBase.hx", lineNumber : 25, className : "doom.ComponentBase", methodName : "render"});
+		throw new thx_error_AbstractMethod({ fileName : "ComponentBase.hx", lineNumber : 27, className : "doom.ComponentBase", methodName : "render"});
 	}
 	,didMount: function() {
 	}
@@ -43,7 +44,7 @@ doom_ComponentBase.prototype = {
 		case 3:
 			break;
 		default:
-			throw new thx_Error("Component " + this.toString() + " must return only element nodes",null,{ fileName : "ComponentBase.hx", lineNumber : 42, className : "doom.ComponentBase", methodName : "updateNode"});
+			throw new thx_Error("Component " + this.toString() + " must return only element nodes",null,{ fileName : "ComponentBase.hx", lineNumber : 44, className : "doom.ComponentBase", methodName : "updateNode"});
 		}
 		var patches = doom__$Node_Node_$Impl_$.diff(oldNode,newNode);
 		doom_HtmlNode.applyPatches(patches,this.element);
@@ -166,6 +167,14 @@ EReg.prototype = {
 };
 var HxOverrides = function() { };
 HxOverrides.__name__ = ["HxOverrides"];
+HxOverrides.dateStr = function(date) {
+	var m = date.getMonth() + 1;
+	var d = date.getDate();
+	var h = date.getHours();
+	var mi = date.getMinutes();
+	var s = date.getSeconds();
+	return date.getFullYear() + "-" + (m < 10?"0" + m:"" + m) + "-" + (d < 10?"0" + d:"" + d) + " " + (h < 10?"0" + h:"" + h) + ":" + (mi < 10?"0" + mi:"" + mi) + ":" + (s < 10?"0" + s:"" + s);
+};
 HxOverrides.cca = function(s,index) {
 	var x = s.charCodeAt(index);
 	if(x != x) return undefined;
@@ -205,6 +214,16 @@ HxOverrides.iter = function(a) {
 		return this.arr[this.cur++];
 	}};
 };
+var Lambda = function() { };
+Lambda.__name__ = ["Lambda"];
+Lambda.find = function(it,f) {
+	var $it0 = $iterator(it)();
+	while( $it0.hasNext() ) {
+		var v = $it0.next();
+		if(f(v)) return v;
+	}
+	return null;
+};
 var List = function() {
 	this.length = 0;
 };
@@ -221,8 +240,11 @@ List.prototype = {
 var Main = function() { };
 Main.__name__ = ["Main"];
 Main.main = function() {
+	pushstate_PushState.init(null,true,false);
+	pushstate_PushState.clearEventListeners();
+	var api = new app_MyApi();
 	var tmp;
-	var comp = new app_App({ appApi : new app_MyApi()},{ });
+	var comp = new app_App({ appApi : api},{ });
 	tmp = doom_NodeImpl.ComponentNode(comp);
 	Doom.mount(tmp,dots_Query.find("#root"));
 };
@@ -525,8 +547,34 @@ app_App.prototype = $extend(Doom.prototype,{
 			_g.update(_g.api.appApi.state);
 		};
 		this.api.appApi.bindAudioEvents(dots_Query.find("#player"));
-		this.api.appApi.loadPlaylist(Main.playlists[0],function() {
-			_g.api.appApi.playRandomTrack();
+		pushstate_PushState.addEventListener(null,null,function(url) {
+			var decoded = StringTools.trim((function($this) {
+				var $r;
+				var _this = decodeURIComponent(url.split("+").join(" "));
+				$r = HxOverrides.substr(_this,4,null);
+				return $r;
+			}(this)));
+			var playlist = Main.playlists[0];
+			var trackTitle = null;
+			var trackAuthor = null;
+			if(decoded.length > 0) {
+				var plStr = decoded.substring(0,decoded.indexOf("/"));
+				var plHost = StringTools.trim(plStr.substring(0,plStr.indexOf("-")));
+				var plName = StringTools.trim(plStr.substring(plStr.indexOf("-") + 1));
+				playlist = Lambda.find(Main.playlists,function(pl) {
+					return pl.host == plHost && pl.name == plName;
+				});
+				if(playlist == null) playlist = Main.playlists[0];
+				var trackStr = decoded.substring(decoded.indexOf("/") + 1);
+				trackAuthor = StringTools.trim(trackStr.substring(0,trackStr.indexOf("-")));
+				trackTitle = StringTools.trim(trackStr.substring(trackStr.indexOf("-") + 1));
+			}
+			_g.api.appApi.loadPlaylist(playlist,function() {
+				var track = Lambda.find(_g.state.tracks,function(t) {
+					return t.author == trackAuthor && t.title == trackTitle;
+				});
+				_g.api.appApi.playTrack(track);
+			});
 		});
 	}
 	,render: function() {
@@ -579,14 +627,14 @@ app_App.prototype = $extend(Doom.prototype,{
 		tmp5 = doom__$Node_Node_$Impl_$.el("div",attributes2,null,child1);
 		var children1 = [tmp5];
 		tmp3 = doom__$Node_Node_$Impl_$.el("div",attributes1,children1,null);
-		var children = [app_HeaderComponent["with"]("HTML5 Music Player"),app_MenuComponent["with"](this.api.appApi,this.state),tmp3,app_PlayerComponent["with"](this.api.appApi,this.state)];
+		var children = [app_HeaderComponent["with"]("HTML5 Music Player",{ playlistState : this.state.playlistState}),app_MenuComponent["with"](this.api.appApi,this.state),tmp3,app_PlayerComponent["with"](this.api.appApi,this.state)];
 		tmp1 = doom__$Node_Node_$Impl_$.el("div",attributes,children,null);
 		return tmp1;
 	}
 	,update: function(newState) {
 		var oldState = this.state;
 		this.state = newState;
-		if(!this.shouldRender(oldState,newState)) return;
+		if(this.isUnmounted || !this.shouldRender(oldState,newState)) return;
 		this.updateNode(this.node);
 	}
 	,shouldRender: function(oldState,newState) {
@@ -595,15 +643,17 @@ app_App.prototype = $extend(Doom.prototype,{
 	,__class__: app_App
 });
 var app_HeaderComponent = function(api,state,children) {
+	if(state.playlistState == null) state.playlistState = app_PlaylistState.Loaded;
 	this.api = api;
 	this.state = state;
 	this.children = children;
 	Doom.call(this,children);
 };
 app_HeaderComponent.__name__ = ["app","HeaderComponent"];
-app_HeaderComponent["with"] = function(title,children) {
+app_HeaderComponent["with"] = function(title,state,children) {
 	var apiVar = { };
-	var stateVar = { title : title};
+	if(state == null) state = { };
+	var stateVar = { title : title, playlistState : state.playlistState};
 	var tmp;
 	var comp = new app_HeaderComponent(apiVar,stateVar,children);
 	tmp = doom_NodeImpl.ComponentNode(comp);
@@ -720,7 +770,7 @@ app_HeaderComponent.prototype = $extend(Doom.prototype,{
 		tmp7 = doom__$Node_Node_$Impl_$.el("ul",attributes6,children2,null);
 		var children1 = [tmp4,tmp5,tmp6,tmp7];
 		tmp2 = doom__$Node_Node_$Impl_$.el("div",attributes1,children1,null);
-		var children = [tmp2].concat(this.children);
+		var children = [tmp2];
 		tmp = doom__$Node_Node_$Impl_$.el("header",attributes,children,null);
 		return tmp;
 	}
@@ -885,13 +935,21 @@ var app_MyApi = function() {
 };
 app_MyApi.__name__ = ["app","MyApi"];
 app_MyApi.prototype = {
-	playTrack: function(track,scroll) {
-		if(scroll == null) scroll = true;
+	playTrack: function(track) {
+		if(track == null) {
+			this.playRandomTrack();
+			return;
+		}
 		this.state.playState.track = track;
 		this.player.src = track.file;
 		this.player.play();
 		this.onUpdate();
-		if(scroll) this.zenscroll.to(dots_Query.find(".demo-list li.active"));
+		this.zenscroll.to(dots_Query.find(".demo-list li.active"));
+		var tmp;
+		var playlist = this.state.currentPlaylist;
+		tmp = "/#!/" + playlist.host + " - " + playlist.name + "/" + ((track.author == null?"":"" + track.author + " - ") + ("" + track.title));
+		var uri = tmp;
+		if(decodeURIComponent(pushstate_PushState.currentPath.split("+").join(" ")) != uri) pushstate_PushState.push(uri);
 	}
 	,playRandomTrack: function() {
 		if(this.state.tracks == null || this.state.tracks.length == 0) return;
@@ -922,6 +980,10 @@ app_MyApi.prototype = {
 		this.onPlayerUpdate();
 	}
 	,loadPlaylist: function(playlist,success) {
+		if(playlist == this.state.currentPlaylist) {
+			if(success != null) success();
+			return;
+		}
 		this.state.playlistState = app_PlaylistState.Loading;
 		this.state.currentPlaylist = playlist;
 		this.state.playState.track = null;
@@ -1238,7 +1300,7 @@ app_PlayerComponent.prototype = $extend(Doom.prototype,{
 	,update: function(newState) {
 		var oldState = this.state;
 		this.state = newState;
-		if(!this.shouldRender(oldState,newState)) return;
+		if(this.isUnmounted || !this.shouldRender(oldState,newState)) return;
 		this.updateNode(this.node);
 	}
 	,shouldRender: function(oldState,newState) {
@@ -1514,6 +1576,11 @@ doom_HtmlNode.createElement = function(name,attributes,children,post) {
 	}
 	return el;
 };
+doom_HtmlNode.replaceNode = function(enter,exit,patch) {
+	var parent = exit.parentNode;
+	if(null == parent) return;
+	parent.replaceChild(enter,exit);
+};
 doom_HtmlNode.applyPatches = function(patches,node) {
 	var post = [];
 	var _g = 0;
@@ -1540,6 +1607,7 @@ doom_HtmlNode.applyPatch = function(patch,node,post) {
 		case 4:
 			var comp = patch[2];
 			comp.didUnmount();
+			comp.isUnmounted = true;
 			break;
 		case 5:
 			var newComp = patch[3];
@@ -1553,6 +1621,7 @@ doom_HtmlNode.applyPatch = function(patch,node,post) {
 				var newComp1 = patch[3];
 				var oldComp1 = patch[2];
 				oldComp1.didUnmount();
+				oldComp1.isUnmounted = true;
 				doom_HtmlNode.applyPatch(doom_Patch.MigrateElementToComponent(newComp1),node,post);
 			}
 			break;
@@ -1568,7 +1637,7 @@ doom_HtmlNode.applyPatch = function(patch,node,post) {
 				node.appendChild(window.document.createTextNode(text));
 				break;
 			default:
-				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 148, className : "doom.HtmlNode", methodName : "applyPatch"});
+				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 159, className : "doom.HtmlNode", methodName : "applyPatch"});
 			}
 			break;
 		case 1:
@@ -1578,7 +1647,7 @@ doom_HtmlNode.applyPatch = function(patch,node,post) {
 				node.appendChild(dots_Html.parse(text1));
 				break;
 			default:
-				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 148, className : "doom.HtmlNode", methodName : "applyPatch"});
+				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 159, className : "doom.HtmlNode", methodName : "applyPatch"});
 			}
 			break;
 		case 2:
@@ -1591,7 +1660,7 @@ doom_HtmlNode.applyPatch = function(patch,node,post) {
 				node.appendChild(el);
 				break;
 			default:
-				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 148, className : "doom.HtmlNode", methodName : "applyPatch"});
+				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 159, className : "doom.HtmlNode", methodName : "applyPatch"});
 			}
 			break;
 		case 3:
@@ -1602,7 +1671,7 @@ doom_HtmlNode.applyPatch = function(patch,node,post) {
 				node.appendChild(comp2.element);
 				break;
 			default:
-				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 148, className : "doom.HtmlNode", methodName : "applyPatch"});
+				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 159, className : "doom.HtmlNode", methodName : "applyPatch"});
 			}
 			break;
 		case 7:
@@ -1615,7 +1684,7 @@ doom_HtmlNode.applyPatch = function(patch,node,post) {
 				node.removeAttribute(name1);
 				break;
 			default:
-				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 148, className : "doom.HtmlNode", methodName : "applyPatch"});
+				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 159, className : "doom.HtmlNode", methodName : "applyPatch"});
 			}
 			break;
 		case 9:
@@ -1642,32 +1711,42 @@ doom_HtmlNode.applyPatch = function(patch,node,post) {
 				}
 				break;
 			default:
-				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 148, className : "doom.HtmlNode", methodName : "applyPatch"});
+				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 159, className : "doom.HtmlNode", methodName : "applyPatch"});
 			}
 			break;
 		case 10:
 			var children1 = patch[4];
 			var attributes1 = patch[3];
 			var name3 = patch[2];
-			var parent = node.parentNode;
-			var el1 = doom_HtmlNode.createElement(name3,attributes1,children1,post);
-			parent.replaceChild(el1,node);
+			var post1 = [];
+			var el1 = doom_HtmlNode.createElement(name3,attributes1,children1,post1);
+			doom_HtmlNode.replaceNode(el1,node,patch);
+			var _g1 = 0;
+			while(_g1 < post1.length) {
+				var f = post1[_g1];
+				++_g1;
+				f();
+			}
 			break;
 		case 13:
 			var comp3 = patch[2];
-			var parent1 = node.parentNode;
-			comp3.init(post);
-			parent1.replaceChild(comp3.element,node);
+			var post2 = [];
+			comp3.init(post2);
+			doom_HtmlNode.replaceNode(comp3.element,node,patch);
+			var _g11 = 0;
+			while(_g11 < post2.length) {
+				var f1 = post2[_g11];
+				++_g11;
+				f1();
+			}
 			break;
 		case 11:
 			var text2 = patch[2];
-			var parent2 = node.parentNode;
-			parent2.replaceChild(window.document.createTextNode(text2),node);
+			doom_HtmlNode.replaceNode(window.document.createTextNode(text2),node,patch);
 			break;
 		case 12:
 			var raw = patch[2];
-			var parent3 = node.parentNode;
-			parent3.replaceChild(dots_Html.parse(raw),node);
+			doom_HtmlNode.replaceNode(dots_Html.parse(raw),node,patch);
 			break;
 		case 14:
 			switch(_g) {
@@ -1680,7 +1759,7 @@ doom_HtmlNode.applyPatch = function(patch,node,post) {
 				if(node.parentNode.nodeName == "TEXTAREA") node.parentNode.value = newcontent1; else node.nodeValue = newcontent1;
 				break;
 			default:
-				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 148, className : "doom.HtmlNode", methodName : "applyPatch"});
+				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 159, className : "doom.HtmlNode", methodName : "applyPatch"});
 			}
 			break;
 		case 15:
@@ -1692,7 +1771,7 @@ doom_HtmlNode.applyPatch = function(patch,node,post) {
 				if(null != n) doom_HtmlNode.applyPatches(patches,n);
 				break;
 			default:
-				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 148, className : "doom.HtmlNode", methodName : "applyPatch"});
+				throw new thx_Error("cannot apply patch " + Std.string(p) + " on " + Std.string(node),null,{ fileName : "HtmlNode.hx", lineNumber : 159, className : "doom.HtmlNode", methodName : "applyPatch"});
 			}
 			break;
 		}
@@ -3261,6 +3340,262 @@ js_html_compat_Uint8Array._subarray = function(start,end) {
 	a.byteOffset = start;
 	return a;
 };
+var pushstate_PushState = function() { };
+pushstate_PushState.__name__ = ["pushstate","PushState"];
+pushstate_PushState.init = function(basePath,triggerFirst,ignoreAnchors) {
+	if(ignoreAnchors == null) ignoreAnchors = true;
+	if(triggerFirst == null) triggerFirst = true;
+	if(basePath == null) basePath = "";
+	pushstate_PushState.listeners = [];
+	pushstate_PushState.preventers = [];
+	pushstate_PushState.uploadCache = new haxe_ds_StringMap();
+	pushstate_PushState.basePath = basePath;
+	pushstate_PushState.ignoreAnchors = ignoreAnchors;
+	window.document.addEventListener("DOMContentLoaded",function(event) {
+		window.document.addEventListener("click",function(e) {
+			if(e.button == 0 && !e.metaKey && !e.ctrlKey) {
+				var link = null;
+				var tmp;
+				var value = e.target;
+				if((value instanceof Node)) tmp = value; else tmp = null;
+				var node = tmp;
+				while(link == null && node != null) {
+					link = (node instanceof HTMLAnchorElement)?node:null;
+					node = node.parentNode;
+				}
+				if(link != null && (link.rel == "pushstate" || link.classList.contains("pushstate"))) {
+					pushstate_PushState.push(link.pathname + link.search + link.hash);
+					e.preventDefault();
+				}
+			}
+		});
+		window.document.addEventListener("submit",function(e1) {
+			var tmp1;
+			var value1 = e1.target;
+			if((value1 instanceof HTMLFormElement)) tmp1 = value1; else tmp1 = null;
+			var form = tmp1;
+			if(form.classList.contains("pushstate")) {
+				e1.preventDefault();
+				pushstate_PushState.interceptFormSubmit(form);
+			}
+		});
+		window.onpopstate = pushstate_PushState.handleOnPopState;
+		if(triggerFirst) pushstate_PushState.handleOnPopState(null); else {
+			pushstate_PushState.currentPath = pushstate_PushState.stripURL(window.document.location.pathname + window.document.location.search + window.document.location.hash);
+			pushstate_PushState.currentState = null;
+			pushstate_PushState.currentUploads = null;
+		}
+	});
+};
+pushstate_PushState.interceptFormSubmit = function(form) {
+	var params = [];
+	var uploads = null;
+	var addParam = function(name,val) {
+		if(name == null || name == "") return;
+		params.push({ name : name, val : val});
+	};
+	var addUpload = function(name1,files) {
+		var _g1 = 0;
+		var _g = files.length;
+		while(_g1 < _g) {
+			var i = _g1++;
+			addParam(name1,files[i].name);
+		}
+		if(uploads == null) uploads = { };
+		uploads[name1] = files;
+	};
+	var _g11 = 0;
+	var _g2 = form.elements.length;
+	while(_g11 < _g2) {
+		var i1 = _g11++;
+		var elm = form.elements.item(i1);
+		var _g21 = elm.nodeName.toUpperCase();
+		switch(_g21) {
+		case "INPUT":
+			var input = (elm instanceof HTMLInputElement)?elm:null;
+			var _g3 = input.type;
+			switch(_g3) {
+			case "text":case "hidden":case "password":case "search":case "email":case "url":case "tel":case "number":case "range":case "date":case "month":case "week":case "time":case "datetime":case "datetime-local":case "color":
+				addParam(input.name,input.value);
+				break;
+			case "checkbox":
+				if(input.checked) addParam(input.name,input.value);
+				break;
+			case "radio":
+				if(input.checked) addParam(input.name,input.value);
+				break;
+			case "file":
+				if(input.files != null && input.files.length > 0) addUpload(input.name,input.files);
+				break;
+			}
+			break;
+		case "TEXTAREA":
+			var ta = (elm instanceof HTMLTextAreaElement)?elm:null;
+			addParam(ta.name,ta.value);
+			break;
+		case "SELECT":
+			var select = (elm instanceof HTMLSelectElement)?elm:null;
+			var _g31 = select.type;
+			switch(_g31) {
+			case "select-one":
+				addParam(select.name,select.value);
+				break;
+			case "select-multiple":
+				var _g5 = 0;
+				var _g4 = select.options.length;
+				while(_g5 < _g4) {
+					var j = _g5++;
+					var option = select.options[j];
+					if(option.selected) addParam(select.name,option.value);
+				}
+				break;
+			}
+			break;
+		}
+	}
+	var tmp;
+	var value = window.document.activeElement;
+	if((value instanceof HTMLInputElement)) tmp = value; else tmp = null;
+	var activeInput = tmp;
+	var tmp1;
+	var value1 = window.document.activeElement;
+	if((value1 instanceof HTMLButtonElement)) tmp1 = value1; else tmp1 = null;
+	var activeBtn = tmp1;
+	if(activeInput != null && activeInput.type == "submit") addParam(activeInput.name,activeInput.value); else if(activeBtn != null && activeBtn.type == "submit") addParam(activeBtn.name,activeBtn.value); else {
+		var defaultSubmit = form.querySelector("input[type=submit], button[type=submit]");
+		var defaultInput = (defaultSubmit instanceof HTMLInputElement)?defaultSubmit:null;
+		var defaultBtn = (defaultSubmit instanceof HTMLButtonElement)?defaultSubmit:null;
+		if(defaultInput != null) addParam(defaultInput.name,defaultInput.value); else if(defaultBtn != null) addParam(defaultBtn.name,defaultBtn.value);
+	}
+	var paramString = params.map(function(p) {
+		return "" + p.name + "=" + encodeURIComponent(p.val);
+	}).join("&");
+	if(form.method.toUpperCase() == "POST") {
+		var paramsObj = { };
+		var _g6 = 0;
+		while(_g6 < params.length) {
+			var p1 = params[_g6];
+			++_g6;
+			if(Object.prototype.hasOwnProperty.call(paramsObj,p1.name)) Reflect.field(paramsObj,p1.name).push(p1.val); else paramsObj[p1.name] = [p1.val];
+		}
+		paramsObj.__postData = paramString;
+		if(uploads != null) pushstate_PushState.setUploadsForState(form.action,paramsObj,uploads);
+		pushstate_PushState.push(form.action,paramsObj,uploads);
+	} else pushstate_PushState.push(form.action + "?" + paramString,null);
+};
+pushstate_PushState.setUploadsForState = function(url,state,uploads) {
+	var tmp;
+	var _this = new Date();
+	tmp = HxOverrides.dateStr(_this);
+	var timestamp = tmp;
+	var random = Math.random();
+	var uploadCacheID = "" + url + "-" + timestamp + "-" + random;
+	var tmp1;
+	var _this1 = pushstate_PushState.uploadCache;
+	if(__map_reserved[uploadCacheID] != null) _this1.setReserved(uploadCacheID,uploads); else _this1.h[uploadCacheID] = uploads;
+	tmp1 = uploads;
+	tmp1;
+	state.__postFilesCacheID = uploadCacheID;
+};
+pushstate_PushState.getUploadsForState = function(state) {
+	if(state == null || Object.prototype.hasOwnProperty.call(state,"__postFilesCacheID") == false) return null;
+	var uploadCacheID = state.__postFilesCacheID;
+	var tmp;
+	var _this = pushstate_PushState.uploadCache;
+	if(__map_reserved[uploadCacheID] != null) tmp = _this.existsReserved(uploadCacheID); else tmp = _this.h.hasOwnProperty(uploadCacheID);
+	if(tmp == false) {
+		console.log("Upload files with cache ID " + uploadCacheID + " is not available anymore");
+		return null;
+	} else {
+		var tmp1;
+		var _this1 = pushstate_PushState.uploadCache;
+		if(__map_reserved[uploadCacheID] != null) tmp1 = _this1.getReserved(uploadCacheID); else tmp1 = _this1.h[uploadCacheID];
+		return tmp1;
+	}
+};
+pushstate_PushState.handleOnPopState = function(e) {
+	var path = pushstate_PushState.stripURL(window.document.location.pathname + window.document.location.search + window.document.location.hash);
+	var state = e != null?e.state:null;
+	var tmp;
+	if(state != null && state.__postFilesCacheID != null) {
+		var tmp1;
+		var _this = pushstate_PushState.uploadCache;
+		var key = state.__postFilesCacheID;
+		if(__map_reserved[key] != null) tmp1 = _this.getReserved(key); else tmp1 = _this.h[key];
+		tmp = tmp1;
+	} else tmp = null;
+	var uploads = tmp;
+	if(pushstate_PushState.ignoreAnchors && path == pushstate_PushState.currentPath) return;
+	if(e != null) {
+		var _g = 0;
+		var _g1 = pushstate_PushState.preventers;
+		while(_g < _g1.length) {
+			var p = _g1[_g];
+			++_g;
+			if(!p(path,state,uploads)) {
+				e.preventDefault();
+				window.history.replaceState(pushstate_PushState.currentState,"",pushstate_PushState.currentPath);
+				return;
+			}
+		}
+	}
+	pushstate_PushState.currentPath = path;
+	pushstate_PushState.currentState = state;
+	pushstate_PushState.currentUploads = pushstate_PushState.getUploadsForState(state);
+	pushstate_PushState.dispatch(pushstate_PushState.currentPath,pushstate_PushState.currentState,pushstate_PushState.currentUploads);
+	return;
+};
+pushstate_PushState.stripURL = function(path) {
+	if(HxOverrides.substr(path,0,pushstate_PushState.basePath.length) == pushstate_PushState.basePath) path = HxOverrides.substr(path,pushstate_PushState.basePath.length,null);
+	if(pushstate_PushState.ignoreAnchors && path.indexOf("#") > -1) {
+		var tmp;
+		var len = path.indexOf("#");
+		tmp = HxOverrides.substr(path,0,len);
+		path = tmp;
+	}
+	return path;
+};
+pushstate_PushState.addEventListener = function(l1,l2,l3) {
+	var tmp;
+	if(l1 != null) tmp = l1; else if(l2 != null) tmp = function(url,state,_) {
+		l2(url,state);
+	}; else if(l3 != null) tmp = function(url1,_1,_2) {
+		l3(url1);
+	}; else throw new js__$Boot_HaxeError("No listener provided");
+	var l = tmp;
+	pushstate_PushState.listeners.push(l);
+	return l;
+};
+pushstate_PushState.clearEventListeners = function() {
+	while(pushstate_PushState.listeners.length > 0) pushstate_PushState.listeners.pop();
+};
+pushstate_PushState.dispatch = function(url,state,uploads) {
+	var _g = 0;
+	var _g1 = pushstate_PushState.listeners;
+	while(_g < _g1.length) {
+		var l = _g1[_g];
+		++_g;
+		l(url,state,uploads);
+	}
+};
+pushstate_PushState.push = function(url,state,uploads) {
+	var strippedURL = pushstate_PushState.stripURL(url);
+	if(state == null) state = { };
+	var _g = 0;
+	var _g1 = pushstate_PushState.preventers;
+	while(_g < _g1.length) {
+		var p = _g1[_g];
+		++_g;
+		if(!p(strippedURL,state,uploads)) return false;
+	}
+	pushstate_PushState.setUploadsForState(strippedURL,state,uploads);
+	window.history.pushState(state,"",url);
+	pushstate_PushState.currentPath = strippedURL;
+	pushstate_PushState.currentState = state;
+	pushstate_PushState.currentUploads = uploads;
+	pushstate_PushState.dispatch(strippedURL,state,uploads);
+	return true;
+};
 var thx_Either = { __ename__ : ["thx","Either"], __constructs__ : ["Left","Right"] };
 thx_Either.Left = function(value) { var $x = ["Left",0,value]; $x.__enum__ = thx_Either; $x.toString = $estr; return $x; };
 thx_Either.Right = function(value) { var $x = ["Right",1,value]; $x.__enum__ = thx_Either; $x.toString = $estr; return $x; };
@@ -4100,6 +4435,8 @@ if(Array.prototype.indexOf) HxOverrides.indexOf = function(a,o,i) {
 String.prototype.__class__ = String;
 String.__name__ = ["String"];
 Array.__name__ = ["Array"];
+Date.prototype.__class__ = Date;
+Date.__name__ = ["Date"];
 var Int = { __name__ : ["Int"]};
 var Dynamic = { __name__ : ["Dynamic"]};
 var Float = Number;
@@ -4170,6 +4507,7 @@ haxe_xml_Parser.escapes = (function($this) {
 }(this));
 js_Boot.__toStr = {}.toString;
 js_html_compat_Uint8Array.BYTES_PER_ELEMENT = 1;
+pushstate_PushState.ignoreAnchors = true;
 thx__$QueryString_QueryString_$Impl_$.separator = "&";
 thx__$QueryString_QueryString_$Impl_$.assignment = "=";
 thx_Strings.UCWORDS = new EReg("[^a-zA-Z]([a-z])","g");

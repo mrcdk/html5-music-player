@@ -1,5 +1,6 @@
 package app;
 
+import app.App.PlaylistState;
 import Doom.*;
 import doom.Node;
 
@@ -10,6 +11,7 @@ import doom.Node;
 class HeaderComponent extends Doom {
 
 	@:state public var title:String;
+	@:state(Loaded) public var playlistState:PlaylistState;
 	
 	override public function render() {
 		return header(["class" => "demo-header mdl-layout__header mdl-color--grey-100 mdl-color-text--grey-600"], [
@@ -21,15 +23,9 @@ class HeaderComponent extends Doom {
 					li(["class" => "mdl-menu__item"], a(["class" => "mdl-button mdl-js-button mdl-button--primary", "href" => "https://twitter.com/jdbaudi", "target" => "_blank"], "Twitter")),
 					li(["class" => "mdl-menu__item"], a(["class" => "mdl-button mdl-js-button mdl-button--primary", "href" => "https://github.com/mrcdk", "target" => "_blank"], "Github")),
 				]),
-				
-				
-				/*
-				nav(["class" => "mdl-navigation"], [
-					a(["class" => "mdl-button mdl-js-button mdl-button--primary", "href" => "https://twitter.com/jdbaudi", "target" => "_blank"], "Twitter"),
-					a(["class" => "mdl-button mdl-js-button mdl-button--primary", "href" => "https://github.com/mrcdk", "target" => "_blank"], "Github"),
-				]),
-				*/
-			])
-		].concat(children));
+			]),
+			//LoadingComponent.with({visible:playlistState == Loading}),
+			//LoadingComponent.with({visible:false}),
+		]);
 	}
 }

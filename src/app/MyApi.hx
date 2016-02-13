@@ -6,6 +6,7 @@ import haxe.xml.Fast;
 import js.Browser;
 import js.html.AudioElement;
 import js.html.Element;
+import pushstate.PushState;
 import thx.Arrays;
 import thx.Floats;
 import thx.load.Loader;
@@ -27,14 +28,21 @@ class MyApi {
 		onPlayerUpdate = function() { };
 	}
 	
-	public function playTrack(track:TrackInfo, ?scroll:Bool = true) {
+	public function playTrack(track:TrackInfo) {
+		if (track == null) {
+			playRandomTrack();
+			return;
+		}
 		state.playState.track = track;
 		player.src = track.file;
 		player.play();
 		onUpdate();
 		
-		if (scroll) {
-			zenscroll.to(Query.find(".demo-list li.active"));
+		zenscroll.to(Query.find(".demo-list li.active"));
+		
+		var uri = Utils.createURI(state.currentPlaylist, track);
+		if (StringTools.urlDecode(PushState.currentPath) != uri) {
+			PushState.push(uri);
 		}
 	}
 	
@@ -63,6 +71,10 @@ class MyApi {
 	}
 	
 	public function loadPlaylist(playlist:Playlist, ?success:Void->Void) {
+		if (playlist == state.currentPlaylist) {
+			if (success != null) success();
+			return;
+		}
 		state.playlistState = Loading;
 		state.currentPlaylist = playlist;
 		state.playState.track = null;

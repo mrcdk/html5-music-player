@@ -19,4 +19,8 @@ class Utils{
 		return '${fmt(current)} / ${end == null || Math.isNaN(end) || end == 0 ? "--:--" : fmt(end)}';
 	}
 	
+	public static inline function createURI(playlist:Playlist, track:TrackInfo) {
+		return '/#!/${playlist.host} - ${playlist.name}/${formatTrackName(track)}';
+	}
+	
 }

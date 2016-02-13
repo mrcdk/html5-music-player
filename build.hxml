@@ -4,6 +4,7 @@
 -lib thx.http
 -lib doom
 -lib dots
+-lib pushstate
 
 -cp src
 -main Main

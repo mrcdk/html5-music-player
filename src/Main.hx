@@ -2,12 +2,13 @@ package;
 import app.App;
 import app.MyApi;
 import dots.Query;
+import pushstate.PushState;
 
 /**
  * ...
  * @author MrCdK
  */
-class Main{
+class Main {
 
 	public static var playlists(default, null):Array<Playlist> = [
 		{host: 'Aersia', name:'VIP', tracks_url:'http://vip.aersia.net/roster.xml', source: 'http://vip.aersia.net/vip.swf'},
@@ -20,8 +21,13 @@ class Main{
 	];
 	
 	public static function main() {
+		PushState.init(true, false);
+		PushState.clearEventListeners();
+		
+		var api = new MyApi();
+		
 		Doom.mount(
-			new App({appApi: new MyApi()}, {}),
+			new App({appApi: api}, {}),
 			Query.find("#root")
 		);
 	}
