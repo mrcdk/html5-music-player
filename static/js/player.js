@@ -241,7 +241,7 @@ List.prototype = {
 var Main = function() { };
 Main.__name__ = ["Main"];
 Main.main = function() {
-	pushstate_PushState.init(null,true,false);
+	pushstate_PushState.init("html5_music_player",true,false);
 	pushstate_PushState.clearEventListeners();
 	var api = new app_MyApi();
 	var tmp;
