@@ -41,7 +41,7 @@ class MyApi {
 		zenscroll.to(Query.find(".demo-list li.active"));
 		
 		var uri = Utils.createURI(state.currentPlaylist, track);
-		if (StringTools.urlDecode(PushState.currentPath) != uri) {
+		if (StringTools.urlDecode('${@:privateAccess PushState.basePath}${PushState.currentPath}') != uri) {
 			PushState.push(uri);
 		}
 	}
