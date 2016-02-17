@@ -21,7 +21,7 @@ class Main {
 	];
 	
 	public static function main() {
-		PushState.init("html5_music_player", true, false);
+		PushState.init("/html5_music_player", true, false);
 		PushState.clearEventListeners();
 		
 		var api = new MyApi();

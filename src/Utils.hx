@@ -1,4 +1,5 @@
 package;
+import pushstate.PushState;
 
 /**
  * ...
@@ -20,7 +21,7 @@ class Utils{
 	}
 	
 	public static inline function createURI(playlist:Playlist, track:TrackInfo) {
-		return '/#!/${playlist.host} - ${playlist.name}/${formatTrackName(track)}';
+		return '${@:privateAccess PushState.basePath}/#!/${playlist.host} - ${playlist.name}/${formatTrackName(track)}';
 	}
 	
 }

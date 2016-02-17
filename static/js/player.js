@@ -241,7 +241,7 @@ List.prototype = {
 var Main = function() { };
 Main.__name__ = ["Main"];
 Main.main = function() {
-	pushstate_PushState.init("html5_music_player",true,false);
+	pushstate_PushState.init("/html5_music_player",true,false);
 	pushstate_PushState.clearEventListeners();
 	var api = new app_MyApi();
 	var tmp;
@@ -949,9 +949,9 @@ app_MyApi.prototype = {
 		this.zenscroll.to(dots_Query.find(".demo-list li.active"));
 		var tmp;
 		var playlist = this.state.currentPlaylist;
-		tmp = "/#!/" + playlist.host + " - " + playlist.name + "/" + ((track.author == null?"":"" + track.author + " - ") + ("" + track.title));
+		tmp = "" + pushstate_PushState.basePath + "/#!/" + playlist.host + " - " + playlist.name + "/" + ((track.author == null?"":"" + track.author + " - ") + ("" + track.title));
 		var uri = tmp;
-		if(decodeURIComponent(pushstate_PushState.currentPath.split("+").join(" ")) != uri) pushstate_PushState.push(uri);
+		if(decodeURIComponent(("" + pushstate_PushState.basePath + pushstate_PushState.currentPath).split("+").join(" ")) != uri) pushstate_PushState.push(uri);
 	}
 	,playRandomTrack: function() {
 		if(this.state.tracks == null || this.state.tracks.length == 0) return;
