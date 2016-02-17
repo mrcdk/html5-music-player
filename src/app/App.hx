@@ -46,14 +46,12 @@ class App extends Doom {
 			update(appApi.state);
 		}
 		appApi.bindAudioEvents(Query.find("#player"));
-		//appApi.loadPlaylist(Main.playlists[0], function() appApi.playRandomTrack());
-
+		
 		PushState.addEventListener(function(url) {
 			var decoded:String = url.urlDecode().substr(4).trim();
 			
 			var playlist:Playlist = Main.playlists[0];
-			var trackTitle:String = null;
-			var trackAuthor:String = null;
+			var trackStr:String = null;
 			if (decoded.length > 0) {
 				var plStr:String  = decoded.substring(0, decoded.indexOf("/"));
 				var plHost:String = plStr.substring(0, plStr.indexOf("-")).trim();
@@ -64,14 +62,16 @@ class App extends Doom {
 				
 				if (playlist == null) playlist = Main.playlists[0];
 				
-				var trackStr:String = decoded.substring(decoded.indexOf("/") + 1);
-				trackAuthor			= trackStr.substring(0, trackStr.indexOf("-")).trim();
-				trackTitle   		= trackStr.substring(trackStr.indexOf("-") + 1).trim();
+				trackStr = decoded.substring(decoded.indexOf("/") + 1);
 			}
 			
-			appApi.loadPlaylist(playlist, function() {			
+			appApi.loadPlaylist(playlist, function() {
+				if (trackStr == null) {
+					appApi.playTrack(null);
+					return;
+				}
 				var track = Lambda.find(state.tracks, function(t) {
-					return (t.author == trackAuthor && t.title == trackTitle);
+					return (Utils.formatTrackName(t).toLowerCase() == trackStr.toLowerCase());
 				});
 				appApi.playTrack(track);
 			});
